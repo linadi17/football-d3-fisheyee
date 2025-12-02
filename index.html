@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Football Force Graph</title>
+<style>
+  body { font-family: Arial, sans-serif; margin: 20px; }
+  svg { background: #fafafa; }
+  .node circle { stroke: #fff; stroke-width: 2px; cursor: pointer; }
+  .node text { font-size: 12px; font-weight: bold; fill: #000; pointer-events: none; }
+  .link { stroke: #999; stroke-opacity: 0.6; }
+  .fixed circle { stroke: #000; stroke-width: 3px; }
+</style>
+<script src="https://d3js.org/d3.v5.min.js"></script>
+</head>
+<body>
+
+<h1>Football Force Graph - Exercices 3 & 4</h1>
+<div style="background: #f0f0f0; padding: 15px; border-radius: 5px; margin-bottom: 20px;">
+  <p><strong>Source des données:</strong> 
+  <a href="http://vlado.fmf.uni-lj.si/pub/networks/data/sport/football.htm">FIFA World Cup 1998 - Transferts de joueurs</a></p>
+  <p><strong>Interactions:</strong> Glisser-déposer les nœuds • Effet Fisheye au survol • Zoom avec molette</p>
+</div>
+
+<svg width="960" height="600"></svg>
+
+<div style="margin-top: 20px; padding: 15px; background: #f9f9f9; border-radius: 5px;">
+  <strong>📊 Légende des groupes:</strong><br>
+  <span style="color: #1f77b4;">●</span> Groupe 1: Amérique du Sud |
+  <span style="color: #ff7f0e;">●</span> Groupe 2: Europe de l'Ouest |
+  <span style="color: #2ca02c;">●</span> Groupe 3: Belgique |
+  <span style="color: #d62728;">●</span> Groupe 4: Europe de l'Est |
+  <span style="color: #9467bd;">●</span> Groupe 5: Afrique |
+  <span style="color: #8c564b;">●</span> Groupe 6: Asie |
+  <span style="color: #e377c2;">●</span> Groupe 7: Amérique du Nord
+</div>
+
+<script>
+
+// ======================
+// DONNÉES
+// ======================
+const data = {
+  "nodes":[
+    {"id":"ARG","group":1,"name":"Argentina"},{"id":"AUT","group":2,"name":"Austria"},
+    {"id":"BEL","group":3,"name":"Belgium"},{"id":"BGR","group":4,"name":"Bulgaria"},
+    {"id":"BRA","group":1,"name":"Brazil"},{"id":"CHE","group":2,"name":"Switzerland"},
+    {"id":"CHL","group":1,"name":"Chile"},{"id":"CMR","group":5,"name":"Cameroon"},
+    {"id":"COL","group":1,"name":"Colombia"},{"id":"DEU","group":2,"name":"Germany"},
+    {"id":"DNK","group":2,"name":"Denmark"},{"id":"ESP","group":2,"name":"Spain"},
+    {"id":"FRA","group":2,"name":"France"},{"id":"GBR","group":2,"name":"United Kingdom"},
+    {"id":"GRE","group":2,"name":"Greece"},{"id":"HRV","group":4,"name":"Croatia"},
+    {"id":"IRN","group":6,"name":"Iran"},{"id":"ITA","group":2,"name":"Italy"},
+    {"id":"JAM","group":7,"name":"Jamaica"},{"id":"JPN","group":6,"name":"Japan"},
+    {"id":"KOR","group":6,"name":"South Korea"},{"id":"MAR","group":5,"name":"Morocco"},
+    {"id":"MEX","group":1,"name":"Mexico"},{"id":"NGA","group":5,"name":"Nigeria"},
+    {"id":"NLD","group":2,"name":"Netherlands"},{"id":"NOR","group":2,"name":"Norway"},
+    {"id":"PRT","group":2,"name":"Portugal"},{"id":"PRY","group":1,"name":"Paraguay"},
+    {"id":"ROM","group":4,"name":"Romania"},{"id":"SCO","group":2,"name":"Scotland"},
+    {"id":"TUN","group":5,"name":"Tunisia"},{"id":"TUR","group":4,"name":"Turkey"},
+    {"id":"USA","group":7,"name":"USA"},{"id":"YUG","group":4,"name":"Yugoslavia"},
+    {"id":"ZAF","group":5,"name":"South Africa"}
+  ],
+  "links":[
+    {"source":"ARG","target":"ESP","value":4},{"source":"ARG","target":"ITA","value":9},
+    {"source":"AUT","target":"DEU","value":7},{"source":"AUT","target":"ESP","value":1},
+    {"source":"AUT","target":"FRA","value":1},{"source":"AUT","target":"GBR","value":1},
+    {"source":"AUT","target":"ITA","value":1},{"source":"BEL","target":"DEU","value":2},
+    {"source":"BEL","target":"FRA","value":2},{"source":"BEL","target":"ITA","value":2},
+    {"source":"BEL","target":"NLD","value":2},{"source":"BGR","target":"DEU","value":4},
+    {"source":"BGR","target":"ESP","value":1},{"source":"BGR","target":"PRT","value":1},
+    {"source":"BGR","target":"TUR","value":4},{"source":"BRA","target":"ESP","value":4},
+    {"source":"BRA","target":"FRA","value":1},{"source":"BRA","target":"ITA","value":5},
+    {"source":"BRA","target":"JPN","value":1},{"source":"BRA","target":"PRT","value":1},
+    {"source":"CHL","target":"ARG","value":1},{"source":"CHL","target":"ITA","value":1},
+    {"source":"CHL","target":"USA","value":1},{"source":"CMR","target":"AUT","value":1},
+    {"source":"CMR","target":"DEU","value":1},{"source":"CMR","target":"ESP","value":2},
+    {"source":"CMR","target":"FRA","value":7},{"source":"CMR","target":"GRE","value":1},
+    {"source":"CMR","target":"ITA","value":2},{"source":"CMR","target":"JPN","value":2},
+    {"source":"CMR","target":"PRT","value":2},{"source":"CMR","target":"TUR","value":2},
+    {"source":"COL","target":"ARG","value":3},{"source":"COL","target":"BRA","value":2},
+    {"source":"COL","target":"ESP","value":1},{"source":"COL","target":"ITA","value":1},
+    {"source":"COL","target":"USA","value":2},{"source":"DEU","target":"ESP","value":1},
+    {"source":"DEU","target":"FRA","value":1},{"source":"DEU","target":"ITA","value":2},
+    {"source":"DNK","target":"DEU","value":3},{"source":"DNK","target":"ESP","value":1},
+    {"source":"DNK","target":"GBR","value":6},{"source":"DNK","target":"ITA","value":1},
+    {"source":"DNK","target":"NLD","value":1},{"source":"DNK","target":"SCO","value":3},
+    {"source":"DNK","target":"TUR","value":1},{"source":"HRV","target":"AUT","value":1},
+    {"source":"HRV","target":"DEU","value":2},{"source":"HRV","target":"ESP","value":4},
+    {"source":"HRV","target":"GBR","value":2},{"source":"HRV","target":"ITA","value":4},
+    {"source":"HRV","target":"TUR","value":1},{"source":"IRN","target":"DEU","value":3},
+    {"source":"ITA","target":"ESP","value":2},{"source":"ITA","target":"FRA","value":1},
+    {"source":"ITA","target":"GBR","value":2},{"source":"JAM","target":"GBR","value":1},
+    {"source":"KOR","target":"FRA","value":1},{"source":"KOR","target":"JPN","value":4},
+    {"source":"MAR","target":"FRA","value":3},{"source":"MAR","target":"DEU","value":4},
+    {"source":"MAR","target":"ESP","value":1},{"source":"MAR","target":"TUN","value":1},
+    {"source":"MAR","target":"ITA","value":3},{"source":"MAR","target":"PRT","value":1},
+    {"source":"NGA","target":"BGR","value":2},{"source":"NGA","target":"CHE","value":1},
+    {"source":"NGA","target":"DEU","value":1},{"source":"NGA","target":"FRA","value":4},
+    {"source":"NGA","target":"ESP","value":3},{"source":"NGA","target":"ITA","value":2},
+    {"source":"NGA","target":"NLD","value":3},{"source":"NGA","target":"USA","value":3},
+    {"source":"NGA","target":"TUR","value":1},{"source":"NGA","target":"ZAF","value":1},
+    {"source":"NLD","target":"DEU","value":1},{"source":"NLD","target":"ESP","value":5},
+    {"source":"NLD","target":"GRE","value":4},{"source":"NLD","target":"ITA","value":2},
+    {"source":"NOR","target":"DEU","value":3},{"source":"NOR","target":"ESP","value":1},
+    {"source":"NOR","target":"GBR","value":12},{"source":"NOR","target":"GRE","value":2},
+    {"source":"NOR","target":"ITA","value":1},{"source":"NOR","target":"SCO","value":3},
+    {"source":"YUG","target":"ITA","value":7},{"source":"YUG","target":"JPN","value":2},
+    {"source":"PRY","target":"MEX","value":1}
+  ]
+};
+
+// ======================
+// COULEUR
+// ======================
+const color = d3.scaleOrdinal()
+  .domain([1,2,3,4,5,6,7])
+  .range(['#1f77b4','#ff7f0e','#2ca02c','#d62728','#9467bd','#8c564b','#e377c2']);
+
+// ======================
+// SVG ET FORCE LAYOUT
+// ======================
+const width = 960, height = 600;
+const svg = d3.select("svg");
+const container = svg.append("g");
+
+// Zoom
+svg.call(d3.zoom()
+  .scaleExtent([0.3,5])
+  .on("zoom", (event) => container.attr("transform", event.transform))
+);
+
+// Force simulation
+const simulation = d3.forceSimulation(data.nodes)
+  .force("link", d3.forceLink(data.links).id(d => d.id).distance(80))
+  .force("charge", d3.forceManyBody().strength(-400))
+  .force("center", d3.forceCenter(width/2, height/2));
+
+// Liens
+const link = container.append("g")
+  .attr("stroke", "#999")
+  .attr("stroke-opacity", 0.6)
+  .selectAll("line")
+  .data(data.links)
+  .enter().append("line")
+  .attr("stroke-width", d => Math.sqrt(d.value)*2);
+
+// Nœuds
+const node = container.selectAll(".node")
+  .data(data.nodes)
+  .enter().append("g")
+  .attr("class","node")
+  .call(d3.drag()
+    .on("start", dragstarted)
+    .on("drag", dragged)
+    .on("end", dragended)
+  );
+
+// Cercles
+node.append("circle")
+  .attr("r", 8)
+  .attr("fill", d => color(d.group));
+
+// Textes
+node.append("text")
+  .attr("dx", 12)
+  .attr("dy", ".35em")
+  .text(d => d.id);
+
+// Tooltips
+node.append("title")
+  .text(d => `${d.name} (Groupe ${d.group})`);
+
+// Tick
+simulation.on("tick", ticked);
+
+function ticked() {
+  link
+    .attr("x1", d => d.source.x)
+    .attr("y1", d => d.source.y)
+    .attr("x2", d => d.target.x)
+    .attr("y2", d => d.target.y);
+  node
+    .attr("transform", d => `translate(${d.x},${d.y})`);
+}
+
+// Drag functions
+function dragstarted(event, d) {
+  if (!event.active) simulation.alphaTarget(0.3).restart();
+  d.fx = d.x;
+  d.fy = d.y;
+}
+function dragged(event, d) {
+  d.fx = event.x;
+  d.fy = event.y;
+}
+function dragended(event, d) {
+  if (!event.active) simulation.alphaTarget(0);
+}
+
+// ======================
+// FISHEYE
+// ======================
+const fisheyeRadius = 200, fisheyeDistortion = 2;
+svg.on("mousemove", (event) => {
+  const [mx,my] = d3.pointer(event);
+  node.each(d => {
+    const dx = d.x - mx, dy = d.y - my;
+    const dd = Math.sqrt(dx*dx + dy*dy);
+    const k = dd < fisheyeRadius ? 1 + fisheyeDistortion*(1 - dd/fisheyeRadius) : 1;
+    d.fx = d.x;
+    d.fy = d.y;
+    d.fx_fisheye = mx + dx*k;
+    d.fy_fisheye = my + dy*k;
+    d.fisheyeZ = k;
+  });
+  node.select("circle")
+    .attr("r", d => d.fisheyeZ ? 8*d.fisheyeZ : 8)
+    .attr("cx", 0).attr("cy",0);
+  node.attr("transform", d => `translate(${d.fx_fisheye},${d.fy_fisheye})`);
+  link
+    .attr("x1", d => d.source.fx_fisheye || d.source.x)
+    .attr("y1", d => d.source.fy_fisheye || d.source.y)
+    .attr("x2", d => d.target.fx_fisheye || d.target.x)
+    .attr("y2", d => d.target.fy_fisheye || d.target.y);
+});
+
+// Double-clic pour libérer un nœud
+node.on("dblclick", (event, d) => {
+  d.fx = null;
+  d.fy = null;
+});
+
+</script>
+</body>
+</html>
